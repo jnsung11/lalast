@@ -7,7 +7,8 @@
 
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR&display=swap" rel="stylesheet">
 
-<style>{
+<style>
+*{
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -16,6 +17,7 @@
 body{
     background: black;
     font-family: "IBM Plex Sans KR", sans-serif;
+    overflow-x: hidden;
 }
 
 section{
@@ -42,36 +44,28 @@ h1{
     width: 60vw;
 }
 
+.day img.smaller{
+    width: 35vw;
+}
+
+.day img.smallest{
+    width: 20vw;
+}
+
 .hidden-text{
     opacity: 0;
 }
 
-.rice-area{
-    width: 100%;
-    min-height: 100vh;
-    background: black;
+.new-story-text{
+    opacity: 0;
+    transition: opacity 0.5s;
 }
 
-.rice-pattern{
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 120px);
-    grid-auto-rows: 120px;
-    gap: 4px 8px;
-    justify-content: start;
-    align-content: start;
+.new-story-text.visible-text{
+    opacity: 1;
 }
-
-.rice-pattern img{
-    width: 120px;
-    height: 120px;
-    object-fit: contain;
-    cursor: pointer;
-    display: block;
-    transition: transform 0.2s, opacity 0.3s;
-}
-
-.rice-pattern img:hover{
-    transform: scale(1.1);
+.text-gap{
+    margin-top: 10px;
 }
 
 .text-section{
@@ -82,12 +76,42 @@ h1{
     background: black;
 }
 
-.day img.smaller{
-    width: 35vw;
+.rice-area{
+    width: 100%;
+    min-height: 100vh;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px;
 }
 
-.day img.smallest{
-    width: 20vw;
+.rice-container{
+    position: relative;
+    width: 95vmin;
+    height: 95vmin;
+}
+
+.rice-item{
+    position: absolute;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.3s;
+}
+
+.rice-item img{
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.rice-item:hover{
+    transform: scale(1.3) !important;
+    z-index: 100;
+}
+
+.rice-item.clicked{
+    opacity: 0;
+    pointer-events: none;
 }
 </style>
 </head>
@@ -98,88 +122,173 @@ h1{
     <img src="na.jpg" id="dayImage">
 </section>
 
+<section id="text96-1" style="display: none;">
+    <h1 class="new-story-text">입구가 조금 멀어졌지만</h1>
+</section>
+
+<section id="text96-2" class="text-gap" style="display: none;">
+    <h1 class="new-story-text">생쥐는 무시하고 계속 먹는다</h1>
+</section>
+
+<section id="text192-1" style="display: none;">
+    <h1 class="new-story-text">많이 멀어진듯 하지만</h1>
+</section>
+
+<section id="text192-2" class="text-gap" style="display: none;">
+    <h1 class="new-story-text">계속해서 쌀을 먹는다</h1>
+</section>
+
 <div class="text-section">
     <h1 class="story-text">쌀독에 빠진 쥐는</h1>
 </div>
 
 <section>
-    <h1 class="story-text">쌀을 조금씩 갉아먹는다</h1>
+    <h1 class="story-text" style="padding-top: 400px; padding-bottom: 300px;">나가기를 잊은채</h1>
 </section>
 
-<div class="rice-area">
-    <div class="rice-pattern" id="ricePattern"></div>
+<section>
+    <h1 class="story-text" style="padding-top: 800px; padding-bottom: 700px;">쌀을 먹기 시작한다</h1>
+</section>
+
+<div class="rice-area" style="padding-top: 100px;">
+    <div class="rice-container" id="riceContainer"></div>
 </div>
 
-// 스크립트 부분은 지티피니의 도움을 받았습니다...
-
 <script>
-const ricePattern = document.getElementById("ricePattern");
+const riceContainer = document.getElementById("riceContainer");
 const dayImage = document.getElementById("dayImage");
 const storyTexts = document.querySelectorAll(".story-text");
+
+const text96_1 = document.getElementById("text96-1");
+const text96_2 = document.getElementById("text96-2");
+const text192_1 = document.getElementById("text192-1");
+const text192_2 = document.getElementById("text192-2");
 
 let clickedCount = 0;
 let firstEventDone = false;
 let secondEventDone = false;
 let finalEventDone = false;
 
-for(let i = 0; i < 55; i++){
-    const rice = document.createElement("img");
-    rice.src = "ssal.png";
+const circles = [
+    { radius: 688, size: 120, items: 32 },
+    { radius: 560, size: 95, items: 32 },
+    { radius: 470, size: 75, items: 32 },
+    { radius: 390, size: 62, items: 32 },
+    { radius: 325, size: 53, items: 32 },
+    { radius: 270, size: 43, items: 32 },
+    { radius: 230, size: 33, items: 32 },
+    { radius: 197, size: 24, items: 32 },
+    { radius: 170, size: 20, items: 32 }
+];
 
-    rice.addEventListener("click", function(){
-        if(rice.classList.contains("clicked")) return;
+let allRiceItems = [];
 
+circles.forEach((circle) => {
+    for(let i = 0; i < circle.items; i++){
+        const rice = document.createElement("div");
+        rice.className = "rice-item";
+        
+        const img = document.createElement("img");
+        img.src = "ssal.png";
+        rice.appendChild(img);
+        
+        const angle = (360 / circle.items) * i;
+        const radian = (angle * Math.PI) / 180;
+        const x = Math.cos(radian) * circle.radius;
+        const y = Math.sin(radian) * circle.radius;
+        
+        rice.style.width = circle.size + "px";
+        rice.style.height = circle.size + "px";
+        rice.style.left = `calc(50% + ${x}px - ${circle.size/2}px)`;
+        rice.style.top = `calc(50% + ${y}px - ${circle.size/2}px)`;
+        
+        rice.dataset.x = x;
+        rice.dataset.y = y;
+        
+        allRiceItems.push(rice);
+        riceContainer.appendChild(rice);
+    }
+});
+
+riceContainer.addEventListener("click", function(e){
+    let clickedRice = null;
+    
+    if(e.target.tagName === "IMG"){
+        clickedRice = e.target.parentElement;
+    } else if(e.target.classList.contains("rice-item")){
+        clickedRice = e.target;
+    }
+    
+    if(!clickedRice || clickedRice.classList.contains("clicked")) return;
+    
+    const clickedX = parseFloat(clickedRice.dataset.x);
+    const clickedY = parseFloat(clickedRice.dataset.y);
+    
+    const distances = allRiceItems
+        .filter(rice => !rice.classList.contains("clicked"))
+        .map(rice => {
+            const riceX = parseFloat(rice.dataset.x);
+            const riceY = parseFloat(rice.dataset.y);
+            const dist = Math.sqrt(
+                Math.pow(clickedX - riceX, 2) + 
+                Math.pow(clickedY - riceY, 2)
+            );
+            return { rice, dist };
+        })
+        .sort((a, b) => a.dist - b.dist);
+    
+    for(let i = 0; i < Math.min(8, distances.length); i++){
+        const rice = distances[i].rice;
         rice.classList.add("clicked");
-        rice.style.opacity = "0";
-        rice.style.pointerEvents = "none";
-
         clickedCount++;
+    }
+    
+    if(clickedCount >= 96 && !firstEventDone){
+        firstEventDone = true;
+        window.scrollTo({ top: 0, behavior: "smooth" });
 
-        if(clickedCount === 16 && !firstEventDone){
-            firstEventDone = true;
+        dayImage.classList.add("small");
+        storyTexts.forEach(text => text.classList.add("hidden-text"));
 
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
+        text96_1.style.display = "flex";
+        text96_2.style.display = "flex";
 
-            dayImage.classList.add("small");
+        setTimeout(() => {
+            text96_1.querySelector(".new-story-text").classList.add("visible-text");
+            text96_2.querySelector(".new-story-text").classList.add("visible-text");
+        }, 100);
+    }
 
-            storyTexts.forEach(function(text){
-                text.classList.add("hidden-text");
-            });
-        }
+    if(clickedCount >= 192 && !secondEventDone){
+        secondEventDone = true;
+        window.scrollTo({ top: 0, behavior: "smooth" });
 
-        if(clickedCount === 34 && !secondEventDone){
-            secondEventDone = true;
+        dayImage.classList.add("smaller");
 
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
+        text96_1.style.display = "none";
+        text96_2.style.display = "none";
 
-            dayImage.classList.add("smaller");
-        }
-        if(clickedCount === 55 && !finalEventDone){
-            finalEventDone = true;
+        text192_1.style.display = "flex";
+        text192_2.style.display = "flex";
 
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
+        setTimeout(() => {
+            text192_1.querySelector(".new-story-text").classList.add("visible-text");
+            text192_2.querySelector(".new-story-text").classList.add("visible-text");
+        }, 100);
+    }
 
-            dayImage.classList.add("smallest");
+    if(clickedCount >= 288 && !finalEventDone){
+        finalEventDone = true;
+        window.scrollTo({ top: 0, behavior: "smooth" });
 
-            setTimeout(function(){
-                window.location.href = "nextnext.html";
-            }, 1000);
-        }
-    });
+        dayImage.classList.add("smallest");
 
-    ricePattern.appendChild(rice);
-}
+        setTimeout(function(){
+            window.location.href = "nextnext.html";
+        }, 1000);
+    }
+});
 </script>
-
 
 </body>
 </html>
